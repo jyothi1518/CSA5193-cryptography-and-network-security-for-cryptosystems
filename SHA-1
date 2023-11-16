@@ -1,0 +1,90 @@
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#define SHA1_BLOCK_SIZE 64
+#define SHA1_DIGEST_SIZE 20
+void sha1(const char *message, uint32_t hash[5]);
+void sha1_process_block(const uint8_t block[SHA1_BLOCK_SIZE], uint32_t hash[5]);
+#define SHA1_K1 0x5A827999
+#define SHA1_K2 0x6ED9EBA1
+#define SHA1_K3 0x8F1BBCDC
+#define SHA1_K4 0xCA62C1D6
+#define ROTL(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
+void sha1(const char *message, uint32_t hash[5]) {
+    size_t len = strlen(message);
+    uint64_t total_bits = len * 8;
+    hash[0] = 0x67452301;
+    hash[1] = 0xEFCDAB89;
+    hash[2] = 0x98BADCFE;
+    hash[3] = 0x10325476;
+    hash[4] = 0xC3D2E1F0;
+    for (size_t i = 0; i < len / SHA1_BLOCK_SIZE; i++) {
+        sha1_process_block((const uint8_t *)&message[i * SHA1_BLOCK_SIZE], hash);
+    }
+    uint8_t last_block[SHA1_BLOCK_SIZE];
+    size_t last_block_size = len % SHA1_BLOCK_SIZE;
+    memcpy(last_block, &message[(len / SHA1_BLOCK_SIZE) * SHA1_BLOCK_SIZE], last_block_size);
+    last_block[last_block_size] = 0x80;
+    if (last_block_size < SHA1_BLOCK_SIZE - 8) {
+        memset(&last_block[last_block_size + 1], 0, SHA1_BLOCK_SIZE - last_block_size - 9);
+    }
+    for (int i = 0; i < 8; i++) {
+        last_block[SHA1_BLOCK_SIZE - 8 + i] = (total_bits >> ((7 - i) * 8)) & 0xFF;
+    }
+    sha1_process_block(last_block, hash);
+}
+void sha1_process_block(const uint8_t block[SHA1_BLOCK_SIZE], uint32_t hash[5]) {
+    uint32_t w[80];
+    for (int i = 0; i < 16; i++) {
+        w[i] = (block[i * 4] << 24) | (block[i * 4 + 1] << 16) | (block[i * 4 + 2] << 8) | block[i * 4 + 3];
+    }
+    for (int i = 16; i < 80; i++) {
+        w[i] = ROTL((w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16]), 1);
+    }
+
+    uint32_t a = hash[0];
+    uint32_t b = hash[1];
+    uint32_t c = hash[2];
+    uint32_t d = hash[3];
+    uint32_t e = hash[4];
+    for (int i = 0; i < 80; i++) {
+        uint32_t f, k;
+
+        if (i < 20) {
+            f = (b & c) | ((~b) & d);
+            k = SHA1_K1;
+        } else if (i < 40) {
+            f = b ^ c ^ d;
+            k = SHA1_K2;
+        } else if (i < 60) {
+            f = (b & c) | (b & d) | (c & d);
+            k = SHA1_K3;
+        } else {
+            f = b ^ c ^ d;
+            k = SHA1_K4;
+        }
+
+        uint32_t temp = ROTL(a, 5) + f + e + k + w[i];
+        e = d;
+        d = c;
+        c = ROTL(b, 30);
+        b = a;
+        a = temp;
+    }
+    hash[0] += a;
+    hash[1] += b;
+    hash[2] += c;
+    hash[3] += d;
+    hash[4] += e;
+}
+
+int main() {
+    const char *message = "Hello, SHA-1!";
+    uint32_t hash[5];
+
+    sha1(message, hash);
+
+    printf("SHA-1 hash: %08x%08x%08x%08x%08x\n", hash[0], hash[1], hash[2], hash[3], hash[4]);
+
+    return 0;
+}
