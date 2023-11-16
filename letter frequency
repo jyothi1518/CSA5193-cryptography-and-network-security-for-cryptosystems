@@ -1,0 +1,62 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define ALPHABET_SIZE 26
+void calculateFrequency(char *ciphertext, int *frequency) {
+    int i;
+    for (i = 0; i < strlen(ciphertext); i++) {
+        if (ciphertext[i] >= 'A' && ciphertext[i] <= 'Z') {
+            frequency[ciphertext[i] - 'A']++;
+        }
+    }
+}
+void displayTopPlaintexts(char *ciphertext, int topN) {
+    int frequency[ALPHABET_SIZE] = {0};
+    calculateFrequency(ciphertext, frequency);
+    int sortedIndex[ALPHABET_SIZE];
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        sortedIndex[i] = i;
+    }
+
+    for (int i = 0; i < ALPHABET_SIZE - 1; i++) {
+        for (int j = i + 1; j < ALPHABET_SIZE; j++) {
+            if (frequency[sortedIndex[i]] < frequency[sortedIndex[j]]) {
+                int temp = sortedIndex[i];
+                sortedIndex[i] = sortedIndex[j];
+                sortedIndex[j] = temp;
+            }
+        }
+    }
+    printf("Top %d possible plaintexts:\n", topN);
+
+    for (int i = 0; i < topN; i++) {
+        printf("%d. ", i + 1);
+        int shift = (sortedIndex[i] + 'A' - 'E' + ALPHABET_SIZE) % ALPHABET_SIZE;
+
+        for (int j = 0; j < strlen(ciphertext); j++) {
+            if (ciphertext[j] >= 'A' && ciphertext[j] <= 'Z') {
+                char decryptedChar = ((ciphertext[j] - 'A' - shift + ALPHABET_SIZE) % ALPHABET_SIZE) + 'A';
+                printf("%c", decryptedChar);
+            } else {
+                printf("%c", ciphertext[j]);
+            }
+        }
+
+        printf("\n");
+    }
+}
+int main() {
+    char ciphertext[1000];
+    int topN;
+
+    printf("Enter the ciphertext (in uppercase): ");
+    fgets(ciphertext, sizeof(ciphertext), stdin);
+    ciphertext[strcspn(ciphertext, "\n")] = '\0'; 
+
+    printf("Enter the number of top plaintexts to display: ");
+    scanf("%d", &topN);
+
+    displayTopPlaintexts(ciphertext, topN);
+
+    return 0;
+}
