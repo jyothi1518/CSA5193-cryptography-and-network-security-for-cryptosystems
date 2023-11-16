@@ -1,0 +1,48 @@
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#define MAX_KEY_SIZE 56
+#define MAX_P_SIZE 18
+#define MAX_S_SIZE 256
+typedef uint32_t word32;
+typedef word32 block[2];
+typedef struct {
+    word32 P[MAX_P_SIZE + 2];
+    word32 S[MAX_S_SIZE];
+} BlowfishContext;
+
+void Blowfish_Init(BlowfishContext *ctx, const uint8_t *key, size_t key_len);
+void Blowfish_Encrypt(BlowfishContext *ctx, block *data);
+void Blowfish_Decrypt(BlowfishContext *ctx, block *data);
+
+int main() {
+    const uint8_t key[] = "ThisIsAKey";
+    block data = {0x12345678, 0xABCDEF01};
+    BlowfishContext ctx;
+    Blowfish_Init(&ctx, key, strlen((char *)key));
+    printf("Original Data: 0x%08X 0x%08X\n", data[0], data[1]);
+    Blowfish_Encrypt(&ctx, &data);
+    printf("Encrypted Data: 0x%08X 0x%08X\n", data[0], data[1]);
+    Blowfish_Decrypt(&ctx, &data);
+    printf("Decrypted Data: 0x%08X 0x%08X\n", data[0], data[1]);
+    return 0;
+}
+
+void Blowfish_Init(BlowfishContext *ctx, const uint8_t *key, size_t key_len) {
+}
+
+void Blowfish_Encrypt(BlowfishContext *ctx, block *data) {
+    word32 left = (*data)[0];
+    word32 right = (*data)[1];
+
+    (*data)[0] = left;
+    (*data)[1] = right;
+}
+
+void Blowfish_Decrypt(BlowfishContext *ctx, block *data) {
+    word32 left = (*data)[0];
+    word32 right = (*data)[1];
+
+    (*data)[0] = left;
+    (*data)[1] = right;
+}
